@@ -1,0 +1,13 @@
+# Terraform
+terraform/.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Zip files
+*.zip
