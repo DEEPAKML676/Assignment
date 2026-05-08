@@ -5,8 +5,6 @@ pipeline {
         IMAGE_NAME = "nodejs-app"
         CONTAINER_NAME = "nodejs-container"
 
-        SONAR_TOKEN = credentials('sonar-token')
-
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
         DOCKERHUB_USERNAME = 'deepakml2000'
     }
@@ -40,16 +38,27 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                sh '''
-                    docker run --rm \
-                    -e SONAR_HOST_URL="http://34.234.211.36:9000" \
-                    -e SONAR_TOKEN=$SONAR_TOKEN \
-                    -v $(pwd):/usr/src \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=assignment-project \
-                    -Dsonar.projectName=assignment-project \
-                    -Dsonar.sources=app
-                '''
+                withSonarQubeEnv('SonarQube') {
+
+                    sh '''
+                        docker run --rm \
+                        -e SONAR_HOST_URL=$SONAR_HOST_URL \
+                        -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
+                        -v $(pwd):/usr/src \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.projectKey=assignment-project \
+                        -Dsonar.projectName=assignment-project \
+                        -Dsonar.sources=app
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
@@ -64,7 +73,9 @@ pipeline {
         stage('Security Scan') {
             steps {
                 sh '''
-                    trivy image $IMAGE_NAME
+                    trivy image --exit-code 1 \
+                    --severity HIGH,CRITICAL \
+                    $IMAGE_NAME
                 '''
             }
         }
