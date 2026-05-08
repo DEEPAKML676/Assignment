@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "nodejs-app"
+        IMAGE_NAME    = "nodejs-app"
         CONTAINER_NAME = "nodejs-container"
-        SONAR_TOKEN = credentials('sonar-token')
+        SONAR_TOKEN   = credentials('sonar-token')
     }
 
     stages {
@@ -12,21 +12,21 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/DEEPAKML676/Assignment.git'
+                    url: 'https://github.com/DEEPAKML676/Assignment.git'
             }
         }
 
         stage('SonarQube Scan') {
             steps {
                 sh '''
-                export PATH=$PATH:/opt/sonar-scanner/bin
-
-                sonar-scanner \
-                -Dsonar.projectKey=assignment-project \
-                -Dsonar.projectName=assignment-project \
-                -Dsonar.sources=app \
-                -Dsonar.host.url=http://34.234.211.36:9000 \
-                -Dsonar.token=$SONAR_TOKEN
+                    docker run --rm \
+                    -e SONAR_HOST_URL="http://34.234.211.36:9000" \
+                    -e SONAR_TOKEN=$SONAR_TOKEN \
+                    -v $(pwd):/usr/src \
+                    sonarsource/sonar-scanner-cli \
+                    -Dsonar.projectKey=assignment-project \
+                    -Dsonar.projectName=assignment-project \
+                    -Dsonar.sources=app
                 '''
             }
         }
@@ -40,8 +40,8 @@ pipeline {
         stage('Stop Old Container') {
             steps {
                 sh '''
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
                 '''
             }
         }
@@ -49,10 +49,10 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 sh '''
-                docker run -d \
-                --name $CONTAINER_NAME \
-                -p 3000:3000 \
-                $IMAGE_NAME
+                    docker run -d \
+                    --name $CONTAINER_NAME \
+                    -p 3000:3000 \
+                    $IMAGE_NAME
                 '''
             }
         }
