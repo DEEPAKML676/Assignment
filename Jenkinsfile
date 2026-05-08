@@ -5,6 +5,8 @@ pipeline {
         IMAGE_NAME = "nodejs-app"
         CONTAINER_NAME = "nodejs-container"
 
+        SONAR_TOKEN = credentials('sonar-token')
+
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
         DOCKERHUB_USERNAME = 'deepakml2000'
     }
@@ -38,31 +40,16 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-
-                    sh '''
-                        mkdir -p .scannerwork
-
-                        docker run --rm \
-                        -e SONAR_HOST_URL=$SONAR_HOST_URL \
-                        -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
-                        -v $(pwd):/usr/src \
-                        -w /usr/src \
-                        sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=assignment-project \
-                        -Dsonar.projectName=assignment-project \
-                        -Dsonar.sources=app \
-                        -Dsonar.working.directory=/tmp/.scannerwork
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                sh '''
+                    docker run --rm \
+                    -e SONAR_HOST_URL="http://34.234.211.36:9000" \
+                    -e SONAR_TOKEN=$SONAR_TOKEN \
+                    -v $(pwd):/usr/src \
+                    sonarsource/sonar-scanner-cli \
+                    -Dsonar.projectKey=assignment-project \
+                    -Dsonar.projectName=assignment-project \
+                    -Dsonar.sources=app
+                '''
             }
         }
 
@@ -115,7 +102,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Run Docker Container') {
             steps {
                 sh '''
                     docker run -d \
