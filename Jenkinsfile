@@ -41,6 +41,8 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
 
                     sh '''
+                        mkdir -p .scannerwork
+
                         docker run --rm \
                         -e SONAR_HOST_URL=$SONAR_HOST_URL \
                         -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
@@ -50,7 +52,7 @@ pipeline {
                         -Dsonar.projectKey=assignment-project \
                         -Dsonar.projectName=assignment-project \
                         -Dsonar.sources=app \
-                        -Dsonar.working.directory=/usr/src/.scannerwork
+                        -Dsonar.working.directory=/tmp/.scannerwork
                     '''
                 }
             }
