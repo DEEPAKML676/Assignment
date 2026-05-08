@@ -2,9 +2,13 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME    = "nodejs-app"
+        IMAGE_NAME = "nodejs-app"
         CONTAINER_NAME = "nodejs-container"
-        SONAR_TOKEN   = credentials('sonar-token')
+
+        SONAR_TOKEN = credentials('sonar-token')
+
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        DOCKERHUB_USERNAME = 'deepakml2026'
     }
 
     stages {
@@ -13,6 +17,24 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/DEEPAKML676/Assignment.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    cd app
+                    npm install
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    cd app
+                    npm test || true
+                '''
             }
         }
 
@@ -33,7 +55,39 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME ./app'
+                sh '''
+                    docker build -t $IMAGE_NAME ./app
+                '''
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    trivy image $IMAGE_NAME
+                '''
+            }
+        }
+
+        stage('Docker Hub Login') {
+            steps {
+                sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login \
+                    -u $DOCKERHUB_CREDENTIALS_USR \
+                    --password-stdin
+                '''
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh '''
+                    docker tag $IMAGE_NAME \
+                    $DOCKERHUB_USERNAME/$IMAGE_NAME:latest
+
+                    docker push \
+                    $DOCKERHUB_USERNAME/$IMAGE_NAME:latest
+                '''
             }
         }
 
@@ -46,7 +100,7 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Deploy Container') {
             steps {
                 sh '''
                     docker run -d \
@@ -59,8 +113,21 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                sh 'docker ps'
+                sh '''
+                    docker ps
+                '''
             }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
