@@ -1,0 +1,19 @@
+The successful execution of the Jenkins CI/CD pipeline is demonstrated using screenshots captured during the complete deployment process from code push to application deployment.
+
+The pipeline includes source code checkout, dependency installation, testing, static code analysis, Docker image creation, Docker Hub push, deployment, and verification.
+
+Screenshots Included
+
+The following screenshots are available inside the screenshots/ folder:
+
+Jenkins Successful Pipeline Run
+Shows all pipeline stages completed successfully with green build status.
+SonarQube Analysis Report
+Displays project dashboard, quality gate status, bugs, vulnerabilities, and code smells.
+Docker Hub Image Push
+Confirms the Docker image was successfully pushed to Docker Hub.
+Running Docker Container
+Shows docker ps output verifying the container is running on port 3000.
+Application Running in Browser
+Confirms the Node.js application is successfully accessible using:
+http://34.234.211.36:3000
